@@ -38,14 +38,17 @@
     // Step 0: Check MIME type support (prerequisite)
     log('--- Prerequisite: MIME Type Support ---');
 
-    // MIME checks use codecs from the test stream:
-    //   Video: H.264 (avc1.42E01E = Baseline Profile as minimal probe)
-    //   Audio: AAC-LC (mp4a.40.2)
+    // MIME checks match actual codecs from the Mux test stream manifest:
+    //   240p/380p: avc1.42000d/420016 (Baseline) + mp4a.40.5 (HE-AAC)
+    //   480p/720p: avc1.64001f (High Profile) + mp4a.40.2 (AAC-LC)
+    //   1080p:     avc1.640028 (High Profile L4.0) + mp4a.40.2 (AAC-LC)
     var mimeChecks = [
         'application/x-mpegURL',
-        'application/x-mpegURL; codecs="avc1.42E01E"',
+        'application/x-mpegURL; codecs="avc1.42000d"',
+        'application/x-mpegURL; codecs="avc1.640028"',
         'application/x-mpegURL; codecs="mp4a.40.2"',
-        'application/x-mpegURL; codecs="avc1.42E01E, mp4a.40.2"'
+        'application/x-mpegURL; codecs="mp4a.40.5"',
+        'application/x-mpegURL; codecs="avc1.640028, mp4a.40.2"'
     ];
     var hlsSupported = false;
     mimeChecks.forEach(function(mime) {
