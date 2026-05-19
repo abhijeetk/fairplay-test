@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Fairplay Test</title>
+        <script>
+            var certificate = 'MIIE1jCCA76gAwIBAgIIIjLN7JgBa4wwDQYJKoZIhvcNAQEFBQAwfzELMAkGA1UEBhMCVVMxEzARBgNVBAoMCkFwcGxlIEluYy4xJjAkBgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MTMwMQYDVQQDDCpBcHBsZSBLZXkgU2VydmljZXMgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMjQxMTI5MDg1OTEyWhcNMjYxMTMwMDg1OTExWjBiMQswCQYDVQQGEwJVUzEUMBIGA1UECgwLQXhpbm9tIEdtYkgxEzARBgNVBAsMCjUzVDU1RjdENjYxKDAmBgNVBAMMH0ZhaXJQbGF5IFN0cmVhbWluZzogQXhpbm9tIEdtYkgwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMH+6uyGzoVQOIpY7n5V3bWUScA99rB0mvGN6RsBX01D1+mZzcf2/kB4hnYXymFEAe4Ll8XSqTICZrT/ZEe1b8nG6h21gNlSN7CTCrcqpuwbCqriffU1Wb5c+H5s9cjSjOeiA6rVKAhzdH+B/D5u5MXP2o6uuin3Ao0bUcR0tFUNAgMBAAGjggH1MIIB8TAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFGPkR1TLhXFZRiyDrMxEMWRnAyy+MIHiBgNVHSAEgdowgdcwgdQGCSqGSIb3Y2QFATCBxjCBwwYIKwYBBQUHAgIwgbYMgbNSZWxpYW5jZSBvbiB0aGlzIGNlcnRpZmljYXRlIGJ5IGFueSBwYXJ0eSBhc3N1bWVzIGFjY2VwdGFuY2Ugb2YgdGhlIHRoZW4gYXBwbGljYWJsZSBzdGFuZGFyZCB0ZXJtcyBhbmQgY29uZGl0aW9ucyBvZiB1c2UsIGNlcnRpZmljYXRlIHBvbGljeSBhbmQgY2VydGlmaWNhdGlvbiBwcmFjdGljZSBzdGF0ZW1lbnRzLjA1BgNVHR8ELjAsMCqgKKAmhiRodHRwOi8vY3JsLmFwcGxlLmNvbS9rZXlzZXJ2aWNlcy5jcmwwHQYDVR0OBBYEFNBgfd+HJiyL4zSS7dqoRQ4uO5mkMA4GA1UdDwEB/wQEAwIFIDA+BgsqhkiG92NkBg0BAwEB/wQsAXJvZWhlZTFqeTk0bmttbXN3cjV6bGJybnZ5dmNld24xOHlkaHkxbHN0Y28wNQYLKoZIhvdjZAYNAQQBAf8EIwFuanFwdnlybWdmdXZxanJsbThuN3Vmd3lyaHB6dmh1ajM3MA0GCSqGSIb3DQEBBQUAA4IBAQAO+bDWMIstv1ldXS/4pbEOpIpOPgno4vEm0sNiaxzzvq+vumrSnyLKbp+AeMy0tlmu0XaXTQxQgiIn8PBAo20dINZ5wcS4hwCuryp8BlHB5prBNeG8qZBBG80iH1xqVuPSkVbrdaVUcinYEygh+AXkhXKtyX0OILhXzFLY+W7+yA6vVTSWclb7HsiDGT9RiVpIi7S0z36Yijtj7iBKXDseh+xQyIkE9Qdpl7lAruWaPeyeibzdYIN8j8vu8sem1HpfX9vHqhB0SrUHBInVEuloN7tEhbyOspn0b7yN95yfwwiEHl2LY6HwCEJpZAoSvVmeEx6MCLPGwyo5UXq9ZIsI';
+
+            var licenseUrl = 'https://drm-fairplay-licensing.axprod.net/AcquireLicense?AxDrmMessage=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoxLCJjb21fa2V5X2lkIjoiNjllNTQwODgtZTllMC00NTMwLThjMWEtMWViNmRjZDBkMTRlIiwibWVzc2FnZSI6eyJ0eXBlIjoiZW50aXRsZW1lbnRfbWVzc2FnZSIsInZlcnNpb24iOjIsImxpY2Vuc2UiOnsiZmFpcnBsYXkiOnsiaWdub3JlX2tleXNfaW5fbGljZW5zZV9yZXF1ZXN0Ijp0cnVlfX0sImNvbnRlbnRfa2V5c19zb3VyY2UiOnsiaW5saW5lIjpbeyJpZCI6IjMwMmY4MGRkLTQxMWUtNDg4Ni1iY2E1LWJiMWY4MDE4YTAyNCIsImVuY3J5cHRlZF9rZXkiOiJyb0tBZzB0N0ppMWk0M2Z3dit6ZnRRPT0iLCJpdiI6ImQvMFlpYXIwRkRzSVZVaXp3UGxibWc9PSJ9XX19fQ.NL2btcHvRpeZGnJXrOdyNbNZOLl7Osl9TlGPlb-3a60';
+            var streamUrl = 'https://cdn.amö.be/TestVectors/Cmaf/protected_1080p_h264_cbcs/manifest.mpd';
+            var skd ='skd://302f80dd-411e-4886-bca5-bb1f8018a024';
+
+            (function() {
+                var decoded = window.atob(certificate);
+                certificate = new Uint8Array(new ArrayBuffer(decoded.length));
+                for (var i = 0; i < decoded.length; i++) {
+                    certificate[i] = decoded.charCodeAt(i);
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <video height="540px" width="960px" autoplay controls muted></video>
+        <script src="https://cdn.jsdelivr.net/npm/shaka-player@4/dist/shaka-player.compiled.debug.js"></script>
+<script>
+(function() {
+    shaka.polyfill.installAll();
+
+    var video = document.getElementsByTagName('video')[0];
+    var player = new shaka.Player();
+    player.attach(video);
+
+    player.configure({
+        drm: {
+            servers: { 'com.apple.fps': licenseUrl },
+            advanced: {
+                'com.apple.fps': {
+                    serverCertificate: certificate,
+                    encryptionScheme: 'cbcs'
+                }
+            },
+            initDataTransform: (initData, initDataType, drmInfo) => {
+
+                console.log("========== FairPlay Debug ==========");
+
+                // 🔹 Step 2.1: initDataType
+                console.log("initDataType:", initDataType);
+
+                // 🔹 Step 2.2: raw initData size
+                console.log("initData byteLength:", initData.byteLength);
+
+                // 🔹 Try decoding initData (may fail if binary)
+                try {
+                    const decoded = new TextDecoder().decode(initData);
+                    console.log("initData (decoded):", decoded);
+                } catch (e) {
+                    console.log("initData decode failed (binary data)");
+                }
+
+                // 🔹 Dump first few bytes (hex)
+                const bytes = new Uint8Array(initData);
+                console.log("initData (hex first 32 bytes):",
+                    Array.from(bytes.slice(0, 32))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join(' ')
+                );
+
+                // 🔹 Certificate validation
+                if (drmInfo && drmInfo.serverCertificate) {
+                    console.log("Certificate length:", drmInfo.serverCertificate.byteLength);
+                } else {
+                    console.error("❌ Missing certificate in drmInfo!");
+                }
+
+                // 🔹 Only transform SKD
+                if (initDataType !== 'skd') {
+                    console.log("Non-SKD initData, returning as-is");
+                    return initData;
+                }
+
+                // 🔹 Extract SKD URL manually (for visibility)
+                let skdUrl = "";
+                try {
+                    skdUrl = new TextDecoder().decode(initData);
+                    console.log("Extracted SKD URL:", skdUrl);
+                } catch (e) {
+                    console.warn("Could not decode SKD URL");
+                }
+
+                // 🔹 Extract content ID
+                let contentId = skdUrl.replace(/^skd:\/\//, '');
+                console.log("Derived Content ID:", contentId);
+
+                // 🔹 Perform transform
+                const transformed = shaka.drm.FairPlay.initDataTransform(
+                    initData,
+                    skd,
+                    drmInfo.serverCertificate
+                );
+
+                // 🔹 Validate transformed data
+                console.log("Transformed initData length:", transformed.byteLength);
+
+                const transformedBytes = new Uint8Array(transformed);
+                console.log("Transformed (hex first 32 bytes):",
+                    Array.from(transformedBytes.slice(0, 32))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join(' ')
+                );
+
+                console.log("====================================");
+
+                return transformed;
+            }
+        }
+    });
+
+    player.load(streamUrl).then(() => {
+        console.log("✅ Video loaded successfully");
+    }).catch((error) => {
+        console.error("❌ Load failed:", error);
+    });
+
+    console.log(player.getConfiguration());
+})();
+</script>
+    </body>
+</html>
+
