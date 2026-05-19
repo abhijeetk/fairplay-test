@@ -18,6 +18,7 @@
     <div id="log"></div>
 
     <script>
+    (function() {
     // Axinom FairPlay test configuration
     //
     // Stream details (from HLS manifest):
@@ -87,6 +88,59 @@
     var video = document.getElementById('video');
     var certificate = null;
     var keySystemUsed = null;
+
+    // Step 0: Check MIME type support (prerequisite)
+    log('--- Prerequisite: MIME Type Support ---');
+    // MIME checks match the actual stream codecs from CONFIG.streamUrl:
+    //   Video: H.264 High Profile (avc1.640028 = Level 4.0, used for 1080p)
+    //   Audio: AAC-LC (mp4a.40.2, stereo)
+    // Also test bare MIME type and Baseline Profile (avc1.42E01E) as a
+    // minimal capability probe.
+    var mimeChecks = [
+        'application/x-mpegURL',
+        'application/x-mpegURL; codecs="avc1.42E01E"',
+        'application/x-mpegURL; codecs="avc1.640028"',
+        'application/x-mpegURL; codecs="mp4a.40.2"',
+        'application/x-mpegURL; codecs="avc1.640028, mp4a.40.2"'
+    ];
+    var hlsSupported = false;
+    mimeChecks.forEach(function(mime) {
+        var result = video.canPlayType(mime);
+        log('canPlayType("' + mime + '") = "' + result + '"',
+            result ? 'ok' : 'error');
+        if (result) hlsSupported = true;
+    });
+
+    // MediaSource.isTypeSupported() checks whether MSE (SourceBuffer-based)
+    // playback supports a given MIME type. Results vary by platform:
+    //
+    //   Cobalt (tvOS): returns TRUE because Cobalt's Starboard integration
+    //     bypasses Chromium's standard MSE MIME checks and delegates directly
+    //     to SbMediaCanPlayMimeAndKeySystem(), which reports HLS as supported.
+    //
+    //   Stock Chromium: returns FALSE because upstream MSE does not list
+    //     application/x-mpegURL as a supported container.
+    //
+    //   Safari: returns FALSE because Safari handles HLS natively via
+    //     video.src, not through MSE.
+    //
+    // We log this for diagnostics only. Playback decisions are based solely
+    // on canPlayType(), not isTypeSupported(), so this page works correctly
+    // on both Cobalt and Safari regardless of the MSE result.
+    if (typeof MediaSource !== 'undefined') {
+        mimeChecks.forEach(function(mime) {
+            var result = MediaSource.isTypeSupported(mime);
+            log('MediaSource.isTypeSupported("' + mime + '") = ' + result);
+        });
+    } else {
+        log('MediaSource API not available');
+    }
+
+    if (!hlsSupported) {
+        log('FATAL: canPlayType reports no HLS support. Aborting.', 'error');
+        return;
+    }
+    log('---');
 
     // Step 1: Set src to trigger URL player path
     log('Setting video.src to FairPlay HLS stream...', 'ok');
@@ -362,6 +416,7 @@
                 ' networkState=' + video.networkState);
         }
     }, 5000);
+    })();
     </script>
 </body>
 </html>
