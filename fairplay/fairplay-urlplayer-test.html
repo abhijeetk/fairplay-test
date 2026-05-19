@@ -137,6 +137,65 @@
     video.addEventListener('stalled', function() { log('EVENT: stalled', 'warn'); });
     video.addEventListener('waiting', function() { log('EVENT: waiting'); });
 
+    // Pack three length-prefixed fields for Cobalt's generateRequest():
+    //   [4 bytes: initData length | initData (skd:// URL, UTF-16LE)]
+    //   [4 bytes: contentID length | contentID]
+    //   [4 bytes: certData length  | certData (FairPlay server certificate)]
+    // See drm_generate_session_update_request.mm:78-87.
+    function packFairPlayInitData(skdUrl, contentId, certData) {
+        // Encode skd:// URL as UTF-16LE
+        var skdUtf16 = new ArrayBuffer(skdUrl.length * 2);
+        var skdView = new Uint16Array(skdUtf16);
+        for (var i = 0; i < skdUrl.length; i++) {
+            skdView[i] = skdUrl.charCodeAt(i);
+        }
+
+        // Encode contentId as UTF-8
+        var encoder = new TextEncoder();
+        var contentIdBytes = encoder.encode(contentId);
+
+        var totalLen = 4 + skdUtf16.byteLength +
+                       4 + contentIdBytes.byteLength +
+                       4 + certData.byteLength;
+        var packed = new ArrayBuffer(totalLen);
+        var view = new DataView(packed);
+        var offset = 0;
+
+        // Field 1: initData (skd:// URL, UTF-16LE)
+        view.setUint32(offset, skdUtf16.byteLength, true);
+        offset += 4;
+        new Uint8Array(packed, offset, skdUtf16.byteLength).set(new Uint8Array(skdUtf16));
+        offset += skdUtf16.byteLength;
+
+        // Field 2: contentID
+        view.setUint32(offset, contentIdBytes.byteLength, true);
+        offset += 4;
+        new Uint8Array(packed, offset, contentIdBytes.byteLength).set(contentIdBytes);
+        offset += contentIdBytes.byteLength;
+
+        // Field 3: certData (FairPlay server certificate)
+        view.setUint32(offset, certData.byteLength, true);
+        offset += 4;
+        new Uint8Array(packed, offset, certData.byteLength).set(new Uint8Array(certData));
+
+        return packed;
+    }
+
+    // Extract skd:// URL from Cobalt's "fairplay" init data.
+    // Format from application_player.mm: [4 bytes: length (LE) | UTF-16LE string]
+    function extractSkdUrlFromFairPlayInitData(initData) {
+        var view = new DataView(initData);
+        var len = view.getUint32(0, true);
+        var utf16 = new Uint16Array(initData, 4, len / 2);
+        return String.fromCharCode.apply(null, utf16);
+    }
+
+    // Extract contentID from a skd:// URL: "skd://contentID" -> "contentID"
+    function extractContentId(skdUrl) {
+        var idx = skdUrl.indexOf('://');
+        return idx >= 0 ? skdUrl.substring(idx + 3) : skdUrl;
+    }
+
     // Handle a single encrypted event: create session, generate request,
     // fetch license, update session.
     async function handleEncryptedEvent(event) {
@@ -186,9 +245,27 @@
                 });
             });
 
-            // Generate the key request with the init data from the encrypted event
-            log('Calling session.generateRequest(' + event.initDataType + ', initData)...');
-            await session.generateRequest(event.initDataType, event.initData);
+            // Build init data for generateRequest based on initDataType.
+            var requestInitData;
+            var requestType = event.initDataType;
+
+            if (event.initDataType === 'fairplay') {
+                // Cobalt AVPlayer path: init data is [4B len | UTF-16LE skd:// URL].
+                // Repack as [initData | contentID | certData] for
+                // SBDApplicationDrmSystem's generateSessionUpdateRequest.
+                var skdUrl = extractSkdUrlFromFairPlayInitData(event.initData);
+                var contentId = extractContentId(skdUrl);
+                log('FairPlay initData: skdUrl=' + skdUrl + ', contentId=' + contentId, 'ok');
+                requestInitData = packFairPlayInitData(skdUrl, contentId, certificate);
+                log('Packed generateRequest data: ' + requestInitData.byteLength + ' bytes', 'ok');
+            } else {
+                // Other types (skd, sinf, cenc): pass through as-is.
+                requestInitData = event.initData;
+            }
+
+            log('Calling session.generateRequest(' + requestType + ', ' +
+                requestInitData.byteLength + ' bytes)...');
+            await session.generateRequest(requestType, requestInitData);
             log('generateRequest completed', 'ok');
 
         } catch (error) {
@@ -220,7 +297,7 @@
                 try {
                     log('Trying requestMediaKeySystemAccess("' + ks + '")...');
                     access = await navigator.requestMediaKeySystemAccess(ks, [{
-                        initDataTypes: ['skd', 'sinf', 'cenc'],
+                        initDataTypes: ['fairplay', 'skd', 'sinf', 'cenc'],
                         videoCapabilities: [{
                             contentType: 'video/mp4; codecs="avc1.42E01E"',
                             encryptionScheme: 'cbcs'
@@ -289,4 +366,5 @@
     </script>
 </body>
 </html>
+
 
