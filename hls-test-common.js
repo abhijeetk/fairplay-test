@@ -258,18 +258,6 @@ var HLSTest = (function() {
 
     }
 
-    function startStatusUpdates(video) {
-        setInterval(function() {
-            if (video.readyState >= 1) {
-                log('Status: time=' + video.currentTime.toFixed(1) +
-                    ' duration=' + (isFinite(video.duration) ? video.duration.toFixed(1) : 'N/A') +
-                    ' paused=' + video.paused +
-                    ' rate=' + video.playbackRate +
-                    ' readyState=' + video.readyState +
-                    ' buffered.length=' + video.buffered.length);
-            }
-        }, 5000);
-    }
 
     // --- Stream info and HLS manifest parsing ---
 
@@ -346,7 +334,6 @@ var HLSTest = (function() {
         log: log,
         initControls: initControls,
         monitorEvents: monitorEvents,
-        startStatusUpdates: startStatusUpdates,
         updateStreamInfo: updateStreamInfo
     };
 })();

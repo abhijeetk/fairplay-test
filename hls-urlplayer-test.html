@@ -172,9 +172,6 @@
         // Monitor events
         HLSTest.monitorEvents(video);
 
-        // Start periodic status updates
-        HLSTest.startStatusUpdates(video);
-
         // Log when ready to play
         video.addEventListener('canplay', function() {
             HLSTest.log('Ready. Press Play or call video.play().', 'ok');
