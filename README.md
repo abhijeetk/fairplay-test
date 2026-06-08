@@ -1,6 +1,7 @@
 # HLS URL Player Test Page
 
 Test page for validating HLS playback via AVPlayer on tvOS.
+Open [hls-urlplayer-test.html](hls-urlplayer-test.html) to run.
 
 ## Files
 
