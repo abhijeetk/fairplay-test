@@ -36,3 +36,9 @@ Pass the test page URL and allow insecure origin:
 
 - `?mode=clear` - Clear HLS (default)
 - `?mode=encrypted` - FairPlay encrypted HLS
+
+## Browser support
+
+- **Safari** - Clear and encrypted HLS both work natively
+- **Chrome** - Clear HLS only (no native FairPlay support)
+- **Cobalt (tvOS)** - Clear and encrypted HLS via AVPlayer URL player pipeline
