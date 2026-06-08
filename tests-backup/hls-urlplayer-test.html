@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HLS URLPlayer Test</title>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 40px; }
+        video { width: 80%; max-width: 800px; }
+        .info { margin: 20px; font-size: 14px; color: #aaa; text-align: left; max-width: 800px; margin: 20px auto; }
+        #log { white-space: pre-wrap; font-family: monospace; font-size: 12px; color: #0f0; }
+        .error { color: #f00; }
+        .warn { color: #ff0; }
+        .ok { color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>HLS URLPlayer Test</h1>
+    <p>This uses native &lt;video src&gt; (no MSE) to trigger AVPlayer URL player path.</p>
+    <video id="player" controls autoplay muted></video>
+    <div class="info">
+        <p id="status">Loading...</p>
+        <div id="log"></div>
+    </div>
+    <script>
+    (function() {
+    var logEl = document.getElementById('log');
+    function log(msg, cls) {
+        var line = '[' + new Date().toISOString().substr(11, 12) + '] ' + msg;
+        console.log(line);
+        var span = document.createElement('span');
+        span.className = cls || '';
+        span.textContent = line + '\n';
+        logEl.appendChild(span);
+    }
+
+    var v = document.getElementById('player');
+    var s = document.getElementById('status');
+
+    // Step 0: Check MIME type support (prerequisite)
+    log('--- Prerequisite: MIME Type Support ---');
+
+    // MIME checks match actual codecs from the Mux test stream manifest:
+    //   240p/380p: avc1.42000d/420016 (Baseline) + mp4a.40.5 (HE-AAC)
+    //   480p/720p: avc1.64001f (High Profile) + mp4a.40.2 (AAC-LC)
+    //   1080p:     avc1.640028 (High Profile L4.0) + mp4a.40.2 (AAC-LC)
+    var mimeChecks = [
+        'application/x-mpegURL',
+        'application/x-mpegURL; codecs="avc1.42000d"',
+        'application/x-mpegURL; codecs="avc1.640028"',
+        'application/x-mpegURL; codecs="mp4a.40.2"',
+        'application/x-mpegURL; codecs="mp4a.40.5"',
+        'application/x-mpegURL; codecs="avc1.640028, mp4a.40.2"'
+    ];
+    var hlsSupported = false;
+    mimeChecks.forEach(function(mime) {
+        var result = v.canPlayType(mime);
+        log('canPlayType("' + mime + '") = "' + result + '"',
+            result ? 'ok' : 'error');
+        if (result) hlsSupported = true;
+    });
+
+    // MediaSource.isTypeSupported() checks whether MSE (SourceBuffer-based)
+    // playback supports a given MIME type. Results vary by platform:
+    //
+    //   Cobalt (tvOS): returns TRUE because Cobalt's Starboard integration
+    //     bypasses Chromium's standard MSE MIME checks and delegates directly
+    //     to SbMediaCanPlayMimeAndKeySystem(), which reports HLS as supported.
+    //
+    //   Stock Chromium: returns FALSE because upstream MSE does not list
+    //     application/x-mpegURL as a supported container.
+    //
+    //   Safari: returns FALSE because Safari handles HLS natively via
+    //     video.src, not through MSE.
+    //
+    // We log this for diagnostics only. Playback decisions are based solely
+    // on canPlayType(), not isTypeSupported(), so this page works correctly
+    // on both Cobalt and Safari regardless of the MSE result.
+    if (typeof MediaSource !== 'undefined') {
+        mimeChecks.forEach(function(mime) {
+            var result = MediaSource.isTypeSupported(mime);
+            log('MediaSource.isTypeSupported("' + mime + '") = ' + result);
+        });
+    } else {
+        log('MediaSource API not available');
+    }
+
+    if (!hlsSupported) {
+        log('FATAL: canPlayType reports no HLS support. Aborting.', 'error');
+        s.textContent = 'ERROR: Platform does not support HLS';
+        return;
+    }
+    log('---');
+
+    // Step 1: Set src to trigger URL player path
+    log('Setting video.src to HLS stream...', 'ok');
+    v.src = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+
+    v.addEventListener('loadstart', function() { s.textContent = 'loadstart'; log('EVENT: loadstart'); });
+    v.addEventListener('loadedmetadata', function() {
+        s.textContent = 'loadedmetadata: ' + v.videoWidth + 'x' + v.videoHeight;
+        log('EVENT: loadedmetadata ' + v.videoWidth + 'x' + v.videoHeight, 'ok');
+    });
+    v.addEventListener('playing', function() { s.textContent = 'playing'; log('EVENT: playing', 'ok'); });
+    v.addEventListener('canplay', function() { log('EVENT: canplay', 'ok'); });
+    v.addEventListener('stalled', function() { log('EVENT: stalled', 'warn'); });
+    v.addEventListener('error', function() {
+        var msg = v.error ? v.error.message : 'unknown';
+        s.textContent = 'error: ' + msg;
+        log('EVENT: error - ' + msg, 'error');
+    });
+
+    // Periodic status
+    setInterval(function() {
+        if (v.readyState >= 1) {
+            log('Status: time=' + v.currentTime.toFixed(1) +
+                ' duration=' + (isFinite(v.duration) ? v.duration.toFixed(1) : 'N/A') +
+                ' paused=' + v.paused +
+                ' readyState=' + v.readyState);
+        }
+    }, 5000);
+    })();
+    </script>
+</body>
+</html>
