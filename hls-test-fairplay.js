@@ -1,11 +1,19 @@
 // FairPlay DRM support for HLS URL Player test page.
 // Uses HLSTest.log() from hls-test-common.js.
 
-// --- Axinom test configuration (public test credentials) ---
+// --- Axinom test credentials ---
+// These are public test credentials for Axinom FairPlay DRM service, used for testing purposes only as per https://github.com/Axinom/public-test-vectors/blob/master/README.md
+// Demo player : https://cdn.xn--am-gka.be/TestVectors/Cmaf/protected_1080p_h264_cbcs/native-hls.html
 var DRM_CONFIG = {
+    // https://github.com/Axinom/public-test-vectors/blob/master/README.md?plain=1#L25
     licenseUrl: 'https://drm-fairplay-licensing.axprod.net/AcquireLicense',
-    licenseToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoxLCJjb21fa2V5X2lkIjoiNjllNTQwODgtZTllMC00NTMwLThjMWEtMWViNmRjZDBkMTRlIiwibWVzc2FnZSI6eyJ0eXBlIjoiZW50aXRsZW1lbnRfbWVzc2FnZSIsInZlcnNpb24iOjIsImxpY2Vuc2UiOnsiZmFpcnBsYXkiOnsiaWdub3JlX2tleXNfaW5fbGljZW5zZV9yZXF1ZXN0Ijp0cnVlfX0sImNvbnRlbnRfa2V5c19zb3VyY2UiOnsiaW5saW5lIjpbeyJpZCI6IjMwMmY4MGRkLTQxMWUtNDg4Ni1iY2E1LWJiMWY4MDE4YTAyNCIsImVuY3J5cHRlZF9rZXkiOiJyb0tBZzB0N0ppMWk0M2Z3dit6ZnRRPT0iLCJpdiI6ImQvMFlpYXIwRkRzSVZVaXp3UGxibWc9PSJ9XX19fQ.NL2btcHvRpeZGnJXrOdyNbNZOLl7Osl9TlGPlb-3a60',
+
+    // https://github.com/Axinom/public-test-vectors/blob/master/ContentKeys/Axinom-Encoding-Cmaf-H264-protected-SingleKey.txt
+    licenseToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJ2ZXJzaW9uIjogMSwKICAiY29tX2tleV9pZCI6ICI2OWU1NDA4OC1lOWUwLTQ1MzAtOGMxYS0xZWI2ZGNkMGQxNGUiLAogICJtZXNzYWdlIjogewogICAgInR5cGUiOiAiZW50aXRsZW1lbnRfbWVzc2FnZSIsCiAgICAidmVyc2lvbiI6IDIsCiAgICAibGljZW5zZSI6IHsKICAgICAgImFsbG93X3BlcnNpc3RlbmNlIjogdHJ1ZQogICAgfSwKICAgICJjb250ZW50X2tleXNfc291cmNlIjogewogICAgICAiaW5saW5lIjogWwogICAgICAgIHsKICAgICAgICAgICJpZCI6ICIzMDJmODBkZC00MTFlLTQ4ODYtYmNhNS1iYjFmODAxOGEwMjQiLAogICAgICAgICAgImVuY3J5cHRlZF9rZXkiOiAicm9LQWcwdDdKaTFpNDNmd3YremZ0UT09IiwKICAgICAgICAgICJ1c2FnZV9wb2xpY3kiOiAiUG9saWN5IEEiCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgImNvbnRlbnRfa2V5X3VzYWdlX3BvbGljaWVzIjogWwogICAgICB7CiAgICAgICAgIm5hbWUiOiAiUG9saWN5IEEiLAogICAgICAgICJwbGF5cmVhZHkiOiB7CiAgICAgICAgICAibWluX2RldmljZV9zZWN1cml0eV9sZXZlbCI6IDE1MCwKICAgICAgICAgICJwbGF5X2VuYWJsZXJzIjogWwogICAgICAgICAgICAiNzg2NjI3RDgtQzJBNi00NEJFLThGODgtMDhBRTI1NUIwMUE3IgogICAgICAgICAgXQogICAgICAgIH0KICAgICAgfQogICAgXQogIH0KfQ._NfhLVY7S6k8TJDWPeMPhUawhympnrk6WAZHOVjER6M',
+
+    // Axinom public FPS test certificate (referenced in public-test-vectors README play links)
     certificateUrl: 'https://tools.axinom.com/FPScert/fairplay.cer',
+
     keySystems: ['com.youtube.fairplay', 'com.apple.fps', 'com.apple.fps.1_0', 'com.apple.fps.2_0']
 };
 
@@ -49,8 +57,14 @@ function packFairPlayInitData(skdUrl, contentId, certData) {
 }
 
 function extractSkdUrlFromFairPlayInitData(initData) {
+    if (!initData || initData.byteLength < 4) {
+        throw new Error('Init data is too short');
+    }
     var view = new DataView(initData);
     var len = view.getUint32(0, true);
+    if (initData.byteLength < 4 + len) {
+        throw new Error('Init data length mismatch');
+    }
     var utf16 = new Uint16Array(initData, 4, len / 2);
     return String.fromCharCode.apply(null, utf16);
 }
@@ -86,7 +100,23 @@ async function handleEncryptedEvent(event, mediaKeys, certificate) {
                 }
                 var licenseData = await response.arrayBuffer();
                 HLSTest.log('License received, size=' + licenseData.byteLength, 'ok');
-                await session.update(new Uint8Array(licenseData));
+
+                if (event.initDataType === 'fairplay') {
+                    // Cobalt's 'fairplay' initDataType path: SbDrmUpdateSession
+                    // expects base64-encoded CKC. Standard FairPlay servers
+                    // return raw binary CKC, so base64-encode before update().
+                    var bytes = new Uint8Array(licenseData);
+                    var binary = '';
+                    for (var i = 0; i < bytes.byteLength; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    var base64CKC = btoa(binary);
+                    HLSTest.log('Base64-encoded CKC for Cobalt: ' + base64CKC.length + ' chars', 'ok');
+                    await session.update(new TextEncoder().encode(base64CKC));
+                } else {
+                    // Standard EME path (Safari/WebKit): pass raw binary CKC
+                    await session.update(new Uint8Array(licenseData));
+                }
                 HLSTest.log('Session updated with license!', 'ok');
             } catch (fetchErr) {
                 HLSTest.log('License fetch error: ' + fetchErr.message, 'error');
@@ -105,7 +135,11 @@ async function handleEncryptedEvent(event, mediaKeys, certificate) {
             });
             updateDrmInfo('di-keystatus', statuses.join(', ') || '--');
             if (isFinite(session.expiration) && session.expiration > 0) {
-                updateDrmInfo('di-expiration', new Date(session.expiration).toISOString());
+                try {
+                    updateDrmInfo('di-expiration', new Date(session.expiration).toISOString());
+                } catch (e) {
+                    updateDrmInfo('di-expiration', session.expiration);
+                }
             } else {
                 updateDrmInfo('di-expiration', 'none');
             }
@@ -146,10 +180,14 @@ function setupFairPlay(video) {
         HLSTest.log('--- FairPlay EME Setup ---', 'ok');
 
         try {
+            if (!navigator.requestMediaKeySystemAccess) {
+                throw new Error('EME (requestMediaKeySystemAccess) is not supported on this platform.');
+            }
             HLSTest.log('Fetching certificate...');
             var certResponse = await fetch(DRM_CONFIG.certificateUrl);
             if (!certResponse.ok) {
                 HLSTest.log('Certificate fetch failed: ' + certResponse.status, 'error');
+                setupStarted = false;
                 return;
             }
             certificate = await certResponse.arrayBuffer();
@@ -200,6 +238,7 @@ function setupFairPlay(video) {
             }
             if (!access) {
                 HLSTest.log('No FairPlay key system found!', 'error');
+                setupStarted = false;
                 return;
             }
 
@@ -219,6 +258,7 @@ function setupFairPlay(video) {
             pendingEvents = [];
         } catch (error) {
             HLSTest.log('EME error: ' + error.message, 'error');
+            setupStarted = false;
         }
     }
 

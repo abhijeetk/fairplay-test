@@ -9,7 +9,7 @@ var HLSTest = (function() {
     // --- Logging and formatting ---
 
     function log(msg, cls) {
-        var line = '[' + new Date().toISOString().substr(11, 12) + '] ' + msg;
+        var line = '[' + new Date().toISOString().slice(11, 23) + '] ' + msg;
         console.log(line);
         var span = document.createElement('span');
         span.className = cls || '';
@@ -76,7 +76,8 @@ var HLSTest = (function() {
             video.currentTime = t;
         };
         document.getElementById('btn-seek-fwd').onclick = function() {
-            var t = Math.min(video.duration || 0, video.currentTime + 10);
+            var maxSeek = isFinite(video.duration) ? video.duration : Infinity;
+            var t = Math.min(maxSeek, video.currentTime + 10);
             log('CMD: seek to ' + t.toFixed(1), 'ok');
             video.currentTime = t;
         };
@@ -116,7 +117,8 @@ var HLSTest = (function() {
                 video.currentTime = Math.max(0, video.currentTime - 5);
             } else if (e.key === 'ArrowRight' || e.keyCode === 39) {
                 e.preventDefault();
-                video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
+                var maxSeek = isFinite(video.duration) ? video.duration : Infinity;
+                video.currentTime = Math.min(maxSeek, video.currentTime + 5);
             } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
                 e.preventDefault();
                 document.getElementById('btn-play').focus();
@@ -274,7 +276,16 @@ var HLSTest = (function() {
 
     // Uses m3u8-parser (loaded via CDN) for robust HLS manifest parsing.
     function parseHlsManifest(url) {
-        fetch(url).then(function(r) { return r.text(); }).then(function(text) {
+        fetch(url).then(function(response) {
+            if (!response.ok) {
+                throw new Error(response.status + ' ' + response.statusText);
+            }
+            return response.text();
+        }).then(function(text) {
+            if (!window.m3u8Parser || !window.m3u8Parser.Parser) {
+                log('m3u8Parser is not available', 'error');
+                return;
+            }
             var parser = new window.m3u8Parser.Parser();
             parser.push(text);
             parser.end();

@@ -37,6 +37,12 @@ Pass the test page URL and allow insecure origin:
 - `?mode=clear` - Clear HLS (default)
 - `?mode=encrypted` - FairPlay encrypted HLS
 
+## Test stream sources
+
+- Stream & credentials: [cdn.amö.be/TestVectors/.../shaka-mpd.html](https://cdn.amö.be/TestVectors/Cmaf/protected_1080p_h264_cbcs/shaka-mpd.html)
+- Test vectors repo: [Axinom/public-test-vectors](https://github.com/Axinom/public-test-vectors)
+- FairPlay demo players: [Dash-Industry-Forum/dash.js#4844](https://github.com/Dash-Industry-Forum/dash.js/issues/4844)
+
 ## Browser support
 
 - **Safari** - Clear and encrypted HLS both work natively

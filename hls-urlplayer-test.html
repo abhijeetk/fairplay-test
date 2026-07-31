@@ -8,6 +8,7 @@
 <body>
     <h3 id="test-title" style="display:inline">HLS URL Player Test Suite</h3>
     <a href="README.md" style="font-size:11px; color:#0a0; margin-left:10px; text-decoration:underline;">[ README ]</a>
+    <a href="https://github.com/Dash-Industry-Forum/dash.js/issues/4844" style="font-size:11px; color:#0a0; margin-left:6px; text-decoration:underline;">[ Axinom FairPlay Ref ]</a>
 
     <!-- Test mode selector -->
     <div id="mode-selector">
@@ -166,12 +167,12 @@
         // Wire up common controls
         HLSTest.initControls(video);
 
+        // Monitor events before setting src so loadstart/loadedmetadata are captured
+        HLSTest.monitorEvents(video);
+
         // Set source (remote URL for playback, local manifestUrl is for parsing only)
         HLSTest.log('Setting video.src to: ' + stream.url, 'ok');
         video.src = stream.url;
-
-        // Monitor events
-        HLSTest.monitorEvents(video);
 
         // Log when ready to play
         video.addEventListener('canplay', function() {
